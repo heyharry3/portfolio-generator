@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Portfolio Generator</title>
+  <style>
+    :root {
+      --bg: #f0f0f5;
+      --card-bg: white;
+      --text: #000;
+      --accent: #007bff;
+    }
+
+    [data-theme="dark"] {
+      --bg: #1a1a1a;
+      --card-bg: #2a2a2a;
+      --text: #fff;
+      --accent: #0d99ff;
+    }
+
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 1200px;
+      gap: 20px;
+      width: 100%;
+    }
+
+    .form, .preview {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 10px;
+      flex: 1;
+      min-width: 300px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    input, textarea, button, select {
+      font-family: inherit;
+    }
+
+    .form input, .form textarea, .form select {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+    }
+
+    .form button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+
+    .project {
+      border-left: 4px solid var(--accent);
+      padding-left: 10px;
+      margin-bottom: 10px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 1200px;
+      margin-bottom: 10px;
+    }
+
+    /* Template Styles */
+    .preview.classic-template {
+      display: block;
+    }
+
+    .preview.side-by-side-template {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+    }
+
+    .preview.side-by-side-template > div {
+      width: 48%;
+    }
+
+    .preview h1 {
+      margin-top: 0;
+    }
+  </style>
+</head>
+<body data-theme="light">
+  <h1>Online Portfolio Generator</h1>
+
+  <div class="actions">
+    <button onclick="toggleTheme()">🌙 Toggle Theme</button>
+    <button onclick="downloadPDF()">📄 Export to PDF</button>
+    <select id="template-select" onchange="changeTemplate()">
+      <option value="classic">🎓 Classic Template</option>
+      <option value="side-by-side">🧱 Side-by-Side Template</option>
+    </select>
+  </div>
+
+  <div class="container">
+    <!-- Input Form -->
+    <div class="form">
+      <h2>Enter Details</h2>
+      <input type="text" id="name" placeholder="Your Name">
+      <input type="text" id="title" placeholder="Professional Title">
+      <textarea id="about" placeholder="About You" rows="4"></textarea>
+      <input type="email" id="email" placeholder="Email">
+
+      <h3>Projects</h3>
+      <div id="projects-container"></div>
+      <button onclick="addProject()">+ Add Project</button>
+    </div>
+
+    <!-- Preview Section -->
+    <div class="preview classic-template" id="preview">
+      <div>
+        <h1 id="preview-name">Your Name</h1>
+        <p id="preview-title">Your Title</p>
+        <p id="preview-about">Tell us about yourself...</p>
+        <p id="preview-email" style="color: gray;"></p>
+      </div>
+      <div>
+        <h3>Projects</h3>
+        <div id="preview-projects"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <script>
+    const nameInput = document.getElementById("name");
+    const titleInput = document.getElementById("title");
+    const aboutInput = document.getElementById("about");
+    const emailInput = document.getElementById("email");
+    const previewName = document.getElementById("preview-name");
+    const previewTitle = document.getElementById("preview-title");
+    const previewAbout = document.getElementById("preview-about");
+    const previewEmail = document.getElementById("preview-email");
+    const previewProjects = document.getElementById("preview-projects");
+    const projectsContainer = document.getElementById("projects-container");
+    const previewDiv = document.getElementById("preview");
+    const templateSelect = document.getElementById("template-select");
+
+    nameInput.addEventListener("input", () => {
+      previewName.textContent = nameInput.value || "Your Name";
+    });
+
+    titleInput.addEventListener("input", () => {
+      previewTitle.textContent = titleInput.value || "Your Title";
+    });
+
+    aboutInput.addEventListener("input", () => {
+      previewAbout.textContent = aboutInput.value || "Tell us about yourself...";
+    });
+
+    emailInput.addEventListener("input", () => {
+      previewEmail.textContent = emailInput.value;
+    });
+
+    function addProject() {
+      const projectDiv = document.createElement("div");
+      projectDiv.classList.add("project-input");
+      projectDiv.innerHTML = `
+        <input type="text" placeholder="Project Name" oninput="updateProjects()">
+        <input type="text" placeholder="Description" oninput="updateProjects()">
+        <input type="text" placeholder="Link (optional)" oninput="updateProjects()">
+        <hr>
+      `;
+      projectsContainer.appendChild(projectDiv);
+    }
+
+    function updateProjects() {
+      const inputs = document.querySelectorAll(".project-input");
+      previewProjects.innerHTML = "";
+      inputs.forEach(project => {
+        const [name, desc, link] = project.querySelectorAll("input");
+        if (name.value || desc.value || link.value) {
+          const div = document.createElement("div");
+          div.classList.add("project");
+          div.innerHTML = `
+            <strong>${name.value}</strong><br>
+            <span>${desc.value}</span><br>
+            ${link.value ? `<a href="${link.value}" target="_blank">${link.value}</a>` : ""}
+          `;
+          previewProjects.appendChild(div);
+        }
+      });
+    }
+
+    function toggleTheme() {
+      const body = document.body;
+      body.dataset.theme = body.dataset.theme === "dark" ? "light" : "dark";
+    }
+
+    function changeTemplate() {
+      const value = templateSelect.value;
+      previewDiv.className = "preview"; // reset
+      if (value === "classic") {
+        previewDiv.classList.add("classic-template");
+      } else if (value === "side-by-side") {
+        previewDiv.classList.add("side-by-side-template");
+      }
+    }
+
+    function downloadPDF() {
+      const element = document.getElementById("preview");
+      html2pdf().from(element).set({
+        margin: 0.5,
+        filename: 'portfolio.pdf',
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      }).save();
+    }
+  </script>
+</body>
+</html>
